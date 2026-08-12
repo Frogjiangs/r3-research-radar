@@ -1,0 +1,20 @@
+include LICENSE README.md README.zh-CN.md pyproject.toml
+include requirements.txt requirements.lock package.json package-lock.json
+include config/profile.example.json config/demo.v1.json
+recursive-include r3radar *.py
+recursive-include schemas *.json
+recursive-include static *.html *.css *.js
+include scripts/SETUP.ps1 scripts/RUN_SMOKE.ps1 scripts/START_DASHBOARD.ps1
+include scripts/build_distribution.py scripts/supply_chain.py
+
+exclude config/r3.v1.json
+exclude config/r3.workflow-cache-value.focus-v1.json
+exclude config/r3.workflow-cache-value.full-v1.json
+prune build
+prune dist
+prune data
+prune literature
+prune outputs
+prune node_modules
+prune tests
+global-exclude *.py[cod] __pycache__

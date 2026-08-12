@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://r3radar.local/schemas/gold_set_review_v2.schema.json",
+  "title": "R3 Gold Set Review v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "source", "scope", "review", "sampling", "items", "revisions"],
+  "properties": {
+    "schema": {"const": "r3/gold-set-review/v2"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "sha256", "import_mode"],
+      "properties": {
+        "schema": {"const": "r3/gold-set-review/v1"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "import_mode": {"const": "review_reset_for_blind_y0"}
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id", "issue_id", "profile_id", "profile_version", "config_hash",
+        "retrieval_hash", "analysis_policy_hash", "database_sha256_at_draft",
+        "collection_kind", "evaluation_split"
+      ],
+      "properties": {
+        "run_id": {"type": "string", "minLength": 1},
+        "issue_id": {"type": "string", "minLength": 1},
+        "profile_id": {"type": "string", "minLength": 1},
+        "profile_version": {"type": "integer", "minimum": 1},
+        "config_hash": {"$ref": "#/$defs/sha256"},
+        "retrieval_hash": {"$ref": "#/$defs/sha256"},
+        "analysis_policy_hash": {"$ref": "#/$defs/sha256"},
+        "database_sha256_at_draft": {"$ref": "#/$defs/sha256"},
+        "collection_kind": {"enum": ["run_derived", "external_known_answer"]},
+        "evaluation_split": {"enum": ["development", "evaluation"]}
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status", "reviewer_identity", "item_count", "gold_truth_basis",
+        "blind_order_seed_sha256", "y0_locked_at", "y0_lock_sha256", "ai_revealed_at"
+      ],
+      "properties": {
+        "status": {"enum": ["y0_in_progress", "y0_locked", "y1_in_progress", "y1_complete"]},
+        "reviewer_identity": {"type": "string", "minLength": 1},
+        "item_count": {"const": 70},
+        "gold_truth_basis": {"const": "blind_y0"},
+        "blind_order_seed_sha256": {"$ref": "#/$defs/sha256"},
+        "y0_locked_at": {"$ref": "#/$defs/nullableTimestamp"},
+        "y0_lock_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "ai_revealed_at": {"$ref": "#/$defs/nullableTimestamp"}
+      }
+    },
+    "sampling": {"type": "object", "required": ["actual_count"], "properties": {"actual_count": {"const": 70}}},
+    "items": {
+      "type": "array",
+      "minItems": 70,
+      "maxItems": 70,
+      "items": {"$ref": "#/$defs/item"}
+    },
+    "revisions": {"type": "array", "items": {"$ref": "#/$defs/revision"}}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullableTimestamp": {
+      "anyOf": [
+        {"type": "string", "format": "date-time"},
+        {"type": "null"}
+      ]
+    },
+    "semanticLabel": {
+      "enum": ["known_important", "relevant_not_priority", "boundary", "hard_negative", "unjudged"]
+    },
+    "operationalStatus": {
+      "enum": ["normal", "inaccessible", "identity_or_version_conflict", "recoverable_failure"]
+    },
+    "y0": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "semantic_label", "operational_status", "confidence", "evidence_opened",
+        "elapsed_ms", "notes", "submitted_at", "revision_sequence", "revision_sha256"
+      ],
+      "properties": {
+        "semantic_label": {"$ref": "#/$defs/semanticLabel"},
+        "operational_status": {"$ref": "#/$defs/operationalStatus"},
+        "confidence": {"anyOf": [{"type": "integer", "minimum": 1, "maximum": 5}, {"type": "null"}]},
+        "evidence_opened": {"type": "boolean"},
+        "elapsed_ms": {"type": "integer", "minimum": 0},
+        "notes": {"type": ["string", "null"]},
+        "submitted_at": {"type": "string", "format": "date-time"},
+        "revision_sequence": {"type": "integer", "minimum": 1},
+        "revision_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "aiAssistance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ai_treatment", "ai_provider", "ai_model", "ai_prompt_sha256", "ai_payload"],
+      "properties": {
+        "ai_treatment": {"enum": ["control", "ai_assisted"]},
+        "ai_provider": {"type": ["string", "null"]},
+        "ai_model": {"type": ["string", "null"]},
+        "ai_prompt_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "ai_payload": {"type": ["object", "null"]}
+      }
+    },
+    "y1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "semantic_label", "confidence", "changed_after_ai", "change_reason",
+        "submitted_at", "revision_sequence", "revision_sha256"
+      ],
+      "properties": {
+        "semantic_label": {"$ref": "#/$defs/semanticLabel"},
+        "confidence": {"anyOf": [{"type": "integer", "minimum": 1, "maximum": 5}, {"type": "null"}]},
+        "changed_after_ai": {"type": "boolean"},
+        "change_reason": {"type": ["string", "null"]},
+        "submitted_at": {"type": "string", "format": "date-time"},
+        "revision_sequence": {"type": "integer", "minimum": 1},
+        "revision_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "item_id", "record_class", "work_id", "analysis_id", "input_sha256",
+        "snapshot_sha256", "captured_as", "selection_bucket", "review_context",
+        "frozen_snapshot", "y0", "ai_assistance", "y1"
+      ],
+      "properties": {
+        "item_id": {"type": "string", "minLength": 1},
+        "record_class": {"enum": ["complete_analysis", "operational_sentinel"]},
+        "work_id": {"type": "integer", "minimum": 1},
+        "analysis_id": {"type": ["integer", "null"], "minimum": 1},
+        "input_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "snapshot_sha256": {"$ref": "#/$defs/sha256"},
+        "captured_as": {"type": "string"},
+        "selection_bucket": {"type": ["string", "null"]},
+        "review_context": {"type": "object"},
+        "frozen_snapshot": {"type": "object"},
+        "y0": {"anyOf": [{"$ref": "#/$defs/y0"}, {"type": "null"}]},
+        "ai_assistance": {"anyOf": [{"$ref": "#/$defs/aiAssistance"}, {"type": "null"}]},
+        "y1": {"anyOf": [{"$ref": "#/$defs/y1"}, {"type": "null"}]}
+      }
+    },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequence", "event", "item_id", "reviewer_identity", "submitted_at",
+        "previous_revision_sha256", "payload", "revision_sha256"
+      ],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 1},
+        "event": {"enum": ["y0_submit", "y0_lock", "ai_reveal", "y1_submit"]},
+        "item_id": {"type": ["string", "null"]},
+        "reviewer_identity": {"type": "string", "minLength": 1},
+        "submitted_at": {"type": "string", "format": "date-time"},
+        "previous_revision_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "payload": {"type": "object"},
+        "revision_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

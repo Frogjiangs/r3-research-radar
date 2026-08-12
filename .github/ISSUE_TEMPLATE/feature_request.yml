@@ -1,0 +1,20 @@
+name: Feature request
+description: Propose a focused improvement and its research workflow.
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Research workflow and unmet need
+      description: Describe the decision or workflow this would improve.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Observable successful outcome
+      description: What would a user be able to verify after this is implemented?
+    validations:
+      required: true

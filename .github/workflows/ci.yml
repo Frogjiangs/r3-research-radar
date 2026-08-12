@@ -1,0 +1,158 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Windows CPython 3.10
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: requirements.lock
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Materialize public default profile
+        shell: pwsh
+        run: Copy-Item -LiteralPath config/profile.example.json -Destination config/r3.v1.json -Force
+
+      - name: Install locked Python environment
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          python -m pip install --disable-pip-version-check --require-hashes --only-binary=:all: -r requirements.lock
+          python scripts/build_distribution.py --output-dir dist --receipt dist/build-receipt.json
+          $wheel = Get-ChildItem -LiteralPath dist -Filter "r3_research_radar-*.whl" -File
+          if ($wheel.Count -ne 1) { throw "Expected one wheel; found $($wheel.Count)." }
+          python -m pip install --disable-pip-version-check --no-deps --no-index --force-reinstall $wheel[0].FullName
+          python -m pip check
+
+      - name: Verify fresh-venv distribution workflow
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          $testRoot = Join-Path $env:RUNNER_TEMP "r3-distribution-test"
+          $testVenv = Join-Path $testRoot "venv"
+          $outside = Join-Path $testRoot "outside-source"
+          py -3.10 -m venv $testVenv
+          $testPython = Join-Path $testVenv "Scripts/python.exe"
+          $testCli = Join-Path $testVenv "Scripts/r3radar.exe"
+          $testCliAlias = Join-Path $testVenv "Scripts/r3-radar.exe"
+          & $testPython -m pip install --disable-pip-version-check --require-hashes --only-binary=:all: -r requirements.lock
+          $wheel = Get-ChildItem -LiteralPath dist -Filter "r3_research_radar-*.whl" -File
+          & $testPython -m pip install --disable-pip-version-check --no-deps --no-index $wheel[0].FullName
+          & $testPython -m pip check
+          New-Item -ItemType Directory -Path $outside | Out-Null
+          Push-Location $outside
+          try {
+            & $testCli --help | Out-Null
+            & $testCliAlias --help | Out-Null
+            & $testCli create-profile --output research.profile.json --profile-id ci-research-radar | Out-Null
+            & $testCli --config research.profile.json doctor --json | Out-Null
+            & $testCli demo --prepare-only --workspace "research workflow demo" | Out-Null
+            & $testPython -m r3radar --help | Out-Null
+            $profileHash = (Get-FileHash -Algorithm SHA256 research.profile.json).Hash
+            $databasePath = Join-Path $outside "research workflow demo/data/radar.sqlite3"
+            $databaseHash = (Get-FileHash -Algorithm SHA256 $databasePath).Hash
+            $demoConfig = (Resolve-Path "research workflow demo/demo.profile.json").Path
+            $listener = [System.Net.Sockets.TcpListener]::new(
+              [System.Net.IPAddress]::Loopback,
+              0
+            )
+            $listener.Start()
+            $port = ([System.Net.IPEndPoint]$listener.LocalEndpoint).Port
+            $listener.Stop()
+            $server = Start-Process -FilePath $testCli -ArgumentList @(
+              "--config", ('"' + $demoConfig + '"'), "dashboard",
+              "--host", "127.0.0.1", "--port", [string]$port
+            ) -PassThru -WindowStyle Hidden
+            try {
+              $healthy = $false
+              for ($attempt = 0; $attempt -lt 40; $attempt++) {
+                if ($server.HasExited) { break }
+                try {
+                  $health = Invoke-RestMethod -Uri "http://127.0.0.1:$port/api/health" -TimeoutSec 1
+                  if ($health.ok -eq $true -and $health.service -eq "r3-research-radar") {
+                    $healthy = $true
+                    break
+                  }
+                }
+                catch {}
+                Start-Sleep -Milliseconds 250
+              }
+              if (-not $healthy) { throw "Installed-wheel dashboard did not become healthy." }
+              $page = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$port/" -TimeoutSec 3
+              if ($page.StatusCode -ne 200) { throw "Installed-wheel dashboard did not serve static UI." }
+            }
+            finally {
+              if (-not $server.HasExited) { Stop-Process -Id $server.Id -Force }
+            }
+            & $testPython -m pip uninstall --yes r3-research-radar | Out-Null
+            if (Test-Path -LiteralPath $testCli) { throw "CLI remains after uninstall." }
+            if (Test-Path -LiteralPath $testCliAlias) { throw "CLI alias remains after uninstall." }
+            if ((Get-FileHash -Algorithm SHA256 research.profile.json).Hash -ne $profileHash) {
+              throw "Uninstall modified user profile data."
+            }
+            if ((Get-FileHash -Algorithm SHA256 $databasePath).Hash -ne $databaseHash) {
+              throw "Uninstall modified user database data."
+            }
+          }
+          finally {
+            Pop-Location
+          }
+
+      - name: Install pinned Codex CLI
+        shell: pwsh
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Compile Python
+        shell: pwsh
+        run: python -m compileall -q r3radar scripts tests
+
+      - name: Run unit tests
+        shell: pwsh
+        run: >-
+          python scripts/generate_verification_receipt.py
+          --output ci-verification-receipt.json
+          --config config/r3.v1.json
+          -- python -m unittest discover -s tests -p "test_*.py"
+
+      - name: Upload verification receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r3-verification-receipt
+          path: ci-verification-receipt.json
+          if-no-files-found: error
+
+      - name: Check browser JavaScript
+        shell: pwsh
+        run: |
+          Get-ChildItem -LiteralPath static -Filter *.js -File | ForEach-Object {
+            node --check $_.FullName
+          }
+
+      - name: Audit public source package
+        shell: pwsh
+        run: python scripts/package_public.py --check

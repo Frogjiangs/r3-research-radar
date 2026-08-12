@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "candidate_id",
+    "deep_read_status",
+    "coverage",
+    "summary_zh",
+    "problem",
+    "method",
+    "evaluation",
+    "limitations",
+    "r3_relationship",
+    "actionable_ideas",
+    "overlap_risks",
+    "reproducibility",
+    "score_scale",
+    "scores",
+    "tier",
+    "evidence_anchors",
+    "uncertainties"
+  ],
+  "properties": {
+    "candidate_id": {"type": "integer"},
+    "deep_read_status": {"type": "string", "enum": ["complete", "incomplete"]},
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chunk_total", "chunk_indices", "complete", "gaps"],
+      "properties": {
+        "chunk_total": {"type": "integer"},
+        "chunk_indices": {"type": "array", "items": {"type": "integer"}},
+        "complete": {"type": "boolean"},
+        "gaps": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "summary_zh": {"type": "string", "minLength": 1},
+    "problem": {"type": "string", "minLength": 1},
+    "method": {"type": "string", "minLength": 1},
+    "evaluation": {"type": "array", "items": {"type": "string"}},
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "r3_relationship": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "actionable_ideas": {"type": "array", "items": {"type": "string"}},
+    "overlap_risks": {"type": "array", "items": {"type": "string"}},
+    "reproducibility": {"type": "string"},
+    "score_scale": {
+      "type": "string",
+      "enum": ["0_to_10", "0_to_100"]
+    },
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "novelty",
+        "r3_relevance",
+        "evidence_strength",
+        "reuse_signal_value",
+        "implementability",
+        "overall"
+      ],
+      "properties": {
+        "novelty": {"type": "number", "minimum": 0, "maximum": 100},
+        "r3_relevance": {"type": "number", "minimum": 0, "maximum": 100},
+        "evidence_strength": {"type": "number", "minimum": 0, "maximum": 100},
+        "reuse_signal_value": {"type": "number", "minimum": 0, "maximum": 100},
+        "implementability": {"type": "number", "minimum": 0, "maximum": 100},
+        "overall": {"type": "number", "minimum": 0, "maximum": 100}
+      }
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["must_read", "important", "background", "out_of_scope_after_deep_read"]
+    },
+    "evidence_anchors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "uncertainties": {"type": "array", "items": {"type": "string"}}
+  }
+}

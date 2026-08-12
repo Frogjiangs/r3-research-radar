@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["query_id", "query", "results", "search_notes"],
+  "properties": {
+    "query_id": {"type": "string"},
+    "query": {"type": "string"},
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "title",
+          "official_url",
+          "year",
+          "doi",
+          "arxiv_id",
+          "github_full_name",
+          "pdf_url",
+          "discovery_reason"
+        ],
+        "properties": {
+          "kind": {"type": "string", "enum": ["paper", "repository"]},
+          "title": {"type": "string"},
+          "official_url": {"type": "string"},
+          "year": {"type": ["integer", "null"]},
+          "doi": {"type": ["string", "null"]},
+          "arxiv_id": {"type": ["string", "null"]},
+          "github_full_name": {"type": ["string", "null"]},
+          "pdf_url": {"type": ["string", "null"]},
+          "discovery_reason": {"type": "string"}
+        }
+      }
+    },
+    "search_notes": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gold y0 盲标 · R3 Research Radar</title>
+    <link rel="stylesheet" href="/gold-review.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#review-workspace">跳到标注卡片</a>
+    <header class="masthead">
+      <div>
+        <p class="eyebrow">BLIND Y0 · HUMAN JUDGMENT</p>
+        <h1>Gold y0 盲标</h1>
+        <p class="subtitle">先独立判断文献价值，再在锁定后进入 y1 辅助评估。</p>
+      </div>
+      <a class="back-link" href="/">返回研究雷达</a>
+    </header>
+
+    <main>
+      <aside class="boundary-note" aria-labelledby="boundary-title">
+        <strong id="boundary-title">这里记录的是你的独立判断，不是自动生成的标准答案。</strong>
+        <span>页面不会提供 AI 分数、分层或入选结果。无法可靠判断时请选择“暂不判断”，不要猜。</span>
+      </aside>
+
+      <section id="entry-panel" class="panel entry-panel" aria-labelledby="entry-title">
+        <div class="section-heading">
+          <div>
+            <p class="step-label">步骤 1</p>
+            <h2 id="entry-title">创建或继续一轮盲标</h2>
+          </div>
+        </div>
+
+        <form id="create-form" class="entry-form">
+          <label for="source-path">
+            现有 Gold v1 JSON 的绝对路径
+            <span class="field-help">文件只在本机读取；服务器响应和页面存储都不会回显路径。</span>
+          </label>
+          <input
+            id="source-path"
+            name="source_path"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="请显式粘贴本机已有文件的完整路径"
+            required
+          >
+
+          <label for="reviewer-identity">
+            标注者标识
+            <span class="field-help">用于确认同一位标注者继续作业；请勿填写敏感个人信息。</span>
+          </label>
+          <input
+            id="reviewer-identity"
+            name="reviewer_identity"
+            type="text"
+            autocomplete="username"
+            maxlength="200"
+            placeholder="例如：researcher-local"
+            required
+          >
+          <button id="create-review" class="primary-button" type="submit">创建盲标任务</button>
+        </form>
+
+        <div class="resume-divider" role="separator"><span>或</span></div>
+        <form id="resume-form" class="resume-form">
+          <label for="resume-review-id">已有 Review ID</label>
+          <input
+            id="resume-review-id"
+            name="review_id"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="粘贴此前保存的 Review ID"
+            required
+          >
+          <label for="resume-reviewer">原标注者标识</label>
+          <input
+            id="resume-reviewer"
+            name="reviewer_identity"
+            type="text"
+            autocomplete="username"
+            maxlength="200"
+            required
+          >
+          <button class="secondary-button" type="submit">继续标注</button>
+        </form>
+        <p id="entry-status" class="inline-status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section id="review-workspace" class="review-workspace" aria-labelledby="workspace-title" hidden>
+        <div id="conflict-banner" class="conflict-banner" role="alert" hidden>
+          <span>另一个标签页或进程已经更新这轮盲标。当前草稿尚未覆盖服务器数据。</span>
+          <button id="reload-conflict" class="secondary-button" type="button">保留草稿并载入最新版本</button>
+        </div>
+        <div class="progress-panel">
+          <div class="progress-copy">
+            <div>
+              <p class="step-label">步骤 2</p>
+              <h2 id="workspace-title">逐条独立判断</h2>
+            </div>
+            <strong id="progress-count">0 / 70</strong>
+          </div>
+          <progress id="review-progress" max="70" value="0">0 / 70</progress>
+          <div class="progress-meta">
+            <span id="position-label">第 1 条</span>
+            <span id="save-state">尚未修改</span>
+          </div>
+        </div>
+
+        <nav class="review-tools" aria-label="盲标导航">
+          <button id="previous-item" class="secondary-button" type="button">← 上一条</button>
+          <button id="next-item" class="secondary-button" type="button">下一条 →</button>
+          <button id="review-low-confidence" class="text-button" type="button">
+            复核低置信度
+          </button>
+        </nav>
+
+        <article id="review-card" class="review-card" aria-busy="false">
+          <header class="card-header">
+            <span id="record-kind" class="record-kind">载入中</span>
+            <span id="item-state" class="item-state">未标注</span>
+          </header>
+
+          <section class="citation-block" aria-labelledby="item-title">
+            <h3 id="item-title" tabindex="-1">正在读取盲化条目</h3>
+            <p id="item-authors" class="citation-meta"></p>
+            <p id="item-identifiers" class="citation-meta"></p>
+            <div id="item-abstract" class="abstract-text"></div>
+            <a id="evidence-link" class="evidence-link" href="#" target="_blank" rel="noopener noreferrer" hidden>
+              打开原始证据 ↗
+            </a>
+            <div id="operational-evidence" class="operational-evidence" hidden></div>
+          </section>
+
+          <form id="annotation-form" class="annotation-form">
+            <fieldset>
+              <legend>这条内容对当前研究问题的语义价值是？</legend>
+              <p class="legend-help">只根据题名、摘要与已打开证据判断；快捷键 1–5。</p>
+              <div class="choice-grid semantic-choices">
+                <label class="choice-card">
+                  <input type="radio" name="semantic_label" value="known_important">
+                  <span><kbd>1</kbd><strong>关键重要</strong><small>会改变研究设计、核心证据或下一步行动。</small></span>
+                </label>
+                <label class="choice-card">
+                  <input type="radio" name="semantic_label" value="relevant_not_priority">
+                  <span><kbd>2</kbd><strong>相关但非优先</strong><small>有帮助，但目前主要作为背景或补充。</small></span>
+                </label>
+                <label class="choice-card">
+                  <input type="radio" name="semantic_label" value="boundary">
+                  <span><kbd>3</kbd><strong>边界材料</strong><small>接近问题边界，适合澄清范围或排除条件。</small></span>
+                </label>
+                <label class="choice-card">
+                  <input type="radio" name="semantic_label" value="hard_negative">
+                  <span><kbd>4</kbd><strong>高相似负例</strong><small>表面相关，但细看后不能回答当前问题。</small></span>
+                </label>
+                <label class="choice-card">
+                  <input type="radio" name="semantic_label" value="unjudged">
+                  <span><kbd>5</kbd><strong>暂不判断</strong><small>证据不足或超出能力边界；不会被算作负例。</small></span>
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>材料本身是否可正常判断？</legend>
+              <p class="legend-help">操作状态和语义价值分开记录，不要用“不相关”代替获取失败。</p>
+              <div class="choice-grid status-choices">
+                <label><input type="radio" name="operational_status" value="normal" checked> 正常</label>
+                <label><input type="radio" name="operational_status" value="inaccessible"> 无法访问</label>
+                <label><input type="radio" name="operational_status" value="identity_or_version_conflict"> 身份/版本冲突</label>
+                <label><input type="radio" name="operational_status" value="recoverable_failure"> 可恢复失败</label>
+              </div>
+            </fieldset>
+
+            <fieldset id="confidence-fieldset">
+              <legend>对这次判断有多确定？</legend>
+              <div class="confidence-row" role="radiogroup" aria-label="置信度 1 到 5">
+                <span>不确定</span>
+                <label><input type="radio" name="confidence" value="1">1</label>
+                <label><input type="radio" name="confidence" value="2">2</label>
+                <label><input type="radio" name="confidence" value="3">3</label>
+                <label><input type="radio" name="confidence" value="4">4</label>
+                <label><input type="radio" name="confidence" value="5">5</label>
+                <span>很确定</span>
+              </div>
+              <p id="confidence-help" class="field-help">低置信度条目可在锁定前集中复核。</p>
+            </fieldset>
+
+            <label class="check-row" for="evidence-opened">
+              <input id="evidence-opened" name="evidence_opened" type="checkbox">
+              <span>我已经打开并检查过原始证据</span>
+            </label>
+
+            <label for="annotation-notes">
+              判断依据或疑问（可选）
+              <span class="field-help">记录为什么这样判断，或留下后续复核线索；最多 8000 字。</span>
+            </label>
+            <textarea id="annotation-notes" name="notes" maxlength="8000" rows="5"></textarea>
+
+            <div class="card-actions">
+              <button id="save-annotation" class="primary-button" type="submit">保存并前往下一条</button>
+              <button id="save-only" class="secondary-button" type="button">仅保存</button>
+            </div>
+          </form>
+        </article>
+
+        <section class="lock-panel" aria-labelledby="lock-title">
+          <div>
+            <p class="step-label">步骤 3</p>
+            <h2 id="lock-title">锁定 y0</h2>
+            <p id="lock-explanation">70 条全部保存后才能锁定。锁定不可撤销，之后进入 y1 辅助评估。</p>
+          </div>
+          <button id="open-lock-dialog" class="danger-button" type="button" disabled>锁定 70 条 y0</button>
+        </section>
+      </section>
+    </main>
+
+    <dialog id="lock-dialog" aria-labelledby="lock-dialog-title">
+      <form method="dialog" class="dialog-content">
+        <h2 id="lock-dialog-title">确认锁定独立判断</h2>
+        <p>锁定后不能再修改 y0，也不会在本页立刻展示 AI 结果；下一阶段是单独的随机化 y1 辅助评估。</p>
+        <label class="check-row" for="lock-confirmation">
+          <input id="lock-confirmation" type="checkbox">
+          <span>我确认 70 条均已独立判断，并理解锁定不可撤销。</span>
+        </label>
+        <div class="dialog-actions">
+          <button value="cancel" class="secondary-button">取消</button>
+          <button id="confirm-lock" value="default" class="danger-button" disabled>确认锁定并结束 y0</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="live-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+    <script src="/gold-review.js"></script>
+  </body>
+</html>

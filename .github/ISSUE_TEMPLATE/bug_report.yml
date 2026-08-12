@@ -1,0 +1,26 @@
+name: Bug report
+description: Report a reproducible R3 failure.
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include the smallest reproducible steps and expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Redacted doctor JSON
+      description: Run `r3radar doctor --json`, then remove usernames, paths, research content, tokens, keys, and other private values before pasting it.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant redacted logs
+      description: Optional. Never include API keys, tokens, full paper text, or private repository content.

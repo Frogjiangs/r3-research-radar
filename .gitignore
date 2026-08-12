@@ -1,0 +1,46 @@
+.venv/
+node_modules/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Build and release artifacts
+build/
+dist/
+*.egg-info/
+*.zip
+
+# Runtime state and research material
+data/
+literature/
+outputs/
+.r3-demo/
+.r3radar/
+requirements/
+*.sqlite
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.db
+*.log
+
+# Local credentials and machine-specific configuration
+.env
+.env.*
+!.env.example
+config/r3.v1.json
+config/r3.workflow-cache-value.*.json
+config/*.local.json
+config/*.private.json
+*.profile.json
+!config/profile.example.json
+
+# Editor and operating-system state
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "r3-research-radar"
+version = "0.2.0a1"
+description = "Decision-grade research radar for papers and code"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10,<3.11"
+dependencies = [
+  "httpx==0.28.1",
+  "pypdf==6.14.2",
+  "typing_extensions==4.16.0",
+]
+keywords = [
+  "research",
+  "literature",
+  "github",
+  "evidence",
+  "research-agent",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Environment :: Win32 (MS Windows)",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+]
+
+[project.urls]
+Homepage = "https://github.com/Frogjiangs/r3-research-radar"
+Repository = "https://github.com/Frogjiangs/r3-research-radar"
+Issues = "https://github.com/Frogjiangs/r3-research-radar/issues"
+
+[project.scripts]
+r3-radar = "r3radar.__main__:main"
+r3radar = "r3radar.__main__:main"
+
+[tool.setuptools]
+packages = ["r3radar"]
+include-package-data = true
+
+[tool.setuptools.data-files]
+"share/r3-research-radar/static" = [
+  "static/app.js",
+  "static/gold-review.css",
+  "static/gold-review.html",
+  "static/gold-review.js",
+  "static/index.html",
+  "static/styles.css",
+]
+"share/r3-research-radar/schemas" = [
+  "schemas/capability_probe.schema.json",
+  "schemas/chunk_analysis.schema.json",
+  "schemas/external_known_answer_set_v1.schema.json",
+  "schemas/gold_set_review_v2.schema.json",
+  "schemas/hosted_search.schema.json",
+  "schemas/known_answer_evaluation_receipt_v1.schema.json",
+  "schemas/synthesis.schema.json",
+  "schemas/synthesis_reduce.schema.json",
+]
+"share/r3-research-radar/config" = [
+  "config/profile.example.json",
+  "config/demo.v1.json",
+]

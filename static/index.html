@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>R3 Research Radar</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body data-view-mode="compact" data-workspace-mode="decision">
+    <header>
+      <div>
+        <p class="eyebrow">CODEX-FIRST · LOCAL EVIDENCE</p>
+        <h1 id="app-title">R3 Research Radar</h1>
+        <p id="app-subtitle" class="subtitle">
+          论文与代码的决策级研究雷达
+        </p>
+      </div>
+      <div class="mode-panel" aria-label="当前工作模式">
+        <strong>决策模式</strong>
+        <span>先处理少量行动，再按需检查流水线</span>
+        <a class="mode-link" href="/gold-review">进入全盲人工标注</a>
+      </div>
+    </header>
+
+    <main>
+      <aside id="demo-banner" class="demo-banner" hidden>
+        <strong>确定性演示</strong>
+        <span>
+          当前两项内容均为合成夹具；本次没有联网、下载或调用模型，不能代表真实推荐质量。
+        </span>
+      </aside>
+
+      <section id="decision-panel" class="decision-panel" aria-labelledby="decision-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">FROZEN EVIDENCE · HUMAN DECISION</p>
+            <h2 id="decision-heading">本期研究决策</h2>
+            <p id="decision-summary" class="decision-summary">
+              正在载入冻结刊期与待决项。
+            </p>
+          </div>
+          <button
+            id="decision-scope-toggle"
+            class="secondary-button"
+            type="button"
+            aria-controls="decision-items"
+            aria-expanded="false"
+            hidden
+          >
+            展开全部
+          </button>
+        </div>
+        <p id="issue-change-summary" class="issue-change-summary" hidden></p>
+        <div id="decision-state" class="decision-state" role="status" aria-live="polite"></div>
+        <div id="decision-items" class="decision-items"></div>
+      </section>
+
+      <details id="operations-panel" class="operations-panel">
+        <summary>
+          <span>运行与证据流水线（审计）</span>
+          <span id="operations-summary">载入状态中</span>
+        </summary>
+        <div class="operations-content">
+          <div class="run-panel" aria-live="polite">
+            <div id="run-state" class="run-state">载入中</div>
+            <div id="run-details" class="run-details"></div>
+          </div>
+          <section id="metrics" class="metrics" aria-label="检索与处理计数"></section>
+
+          <section
+            id="deep-read-panel"
+            class="deep-read-panel"
+            data-state="loading"
+            aria-labelledby="deep-read-heading"
+          >
+            <div class="deep-read-heading">
+              <div>
+                <p class="eyebrow">AUTONOMOUS DEEP READ · LIVE</p>
+                <h2 id="deep-read-heading">深读监控</h2>
+                <p id="deep-read-summary" class="deep-read-summary">
+                  正在读取深读队列状态。
+                </p>
+              </div>
+              <span id="deep-read-state" class="deep-read-state">载入中</span>
+            </div>
+            <div class="deep-read-body">
+              <div class="deep-read-current">
+                <p class="deep-read-caption">当前任务</p>
+                <h3 id="deep-read-title">等待状态数据</h3>
+                <div class="deep-read-progress-line">
+                  <span id="deep-read-progress-text">尚无进度</span>
+                  <span id="deep-read-last-activity">尚无活动记录</span>
+                </div>
+                <progress
+                  id="deep-read-progress"
+                  max="1"
+                  aria-label="当前深读任务进度"
+                ></progress>
+                <p id="deep-read-message" class="deep-read-message"></p>
+              </div>
+              <dl class="deep-read-counts">
+                <div>
+                  <dt>已完成</dt>
+                  <dd id="deep-read-completed">—</dd>
+                </div>
+                <div>
+                  <dt>正在处理</dt>
+                  <dd id="deep-read-running">—</dd>
+                </div>
+                <div>
+                  <dt>排队</dt>
+                  <dd id="deep-read-queued">—</dd>
+                </div>
+                <div>
+                  <dt>失败</dt>
+                  <dd id="deep-read-failed">—</dd>
+                </div>
+              </dl>
+            </div>
+            <p id="deep-read-refresh-state" class="deep-read-refresh-state">
+              每 15 秒自动更新
+            </p>
+          </section>
+        </div>
+      </details>
+
+      <section class="candidate-browser" aria-labelledby="candidate-browser-heading">
+        <div class="candidate-browser-heading">
+          <div>
+            <p class="eyebrow">CANDIDATE LIBRARY</p>
+            <h2 id="candidate-browser-heading">候选库</h2>
+          </div>
+          <p>用于检索与回看，不等同于本期行动建议。</p>
+        </div>
+      <section class="toolbar" aria-label="候选库筛选">
+        <label>
+          状态
+          <select id="state-filter">
+            <option value="">全部</option>
+            <option value="analyzed">已深读</option>
+            <option value="content_unavailable">全文不可用</option>
+            <option value="content_incomplete">覆盖不完整</option>
+            <option value="verification_pending">待官方核验</option>
+            <option value="admitted">待取全文</option>
+            <option value="content_retry">全文待重试</option>
+            <option value="content_ready">全文已就绪</option>
+            <option value="analysis_pending">深读排队</option>
+            <option value="analysis_running">正在深读</option>
+            <option value="analysis_failed">深读失败</option>
+            <option value="rejected">已拒绝</option>
+          </select>
+        </label>
+        <label>
+          来源
+          <select id="source-filter">
+            <option value="">全部来源</option>
+          </select>
+        </label>
+        <label>
+          搜索
+          <input id="text-filter" type="search" placeholder="标题或结论">
+        </label>
+        <button
+          id="view-mode-toggle"
+          class="secondary-button"
+          type="button"
+          aria-pressed="false"
+        >
+          展开深度信息
+        </button>
+        <button id="refresh" type="button">刷新</button>
+      </section>
+
+      <section>
+        <div id="works" class="works" aria-live="polite"></div>
+        <button
+          id="load-more-works"
+          class="secondary-button load-more-works"
+          type="button"
+          hidden
+        >
+          加载更多
+        </button>
+      </section>
+      </section>
+    </main>
+
+    <template id="work-template">
+      <article class="work">
+        <div class="work-topline">
+          <span class="kind"></span>
+          <span class="state"></span>
+          <span class="tier"></span>
+          <span class="score"></span>
+          <span class="analysis-policy" hidden></span>
+        </div>
+        <h2><a class="title" target="_blank" rel="noreferrer"></a></h2>
+        <p class="meta"></p>
+        <section class="decision-brief" aria-label="研究决策摘要">
+          <div>
+            <strong>为什么值得关注</strong>
+            <p class="brief-why"></p>
+          </div>
+          <div>
+            <strong>可能改变什么</strong>
+            <p class="brief-change"></p>
+          </div>
+          <div>
+            <strong>尚未证明</strong>
+            <p class="brief-gap"></p>
+          </div>
+        </section>
+        <p class="summary"></p>
+        <details>
+          <summary>证据与 R3 关系</summary>
+          <div class="details-content"></div>
+        </details>
+        <form class="feedback-form">
+          <input type="hidden" name="work_id">
+          <label>
+            四级反馈
+            <select name="rating" required>
+              <option value="">请选择</option>
+              <option>改变思路</option>
+              <option>值得保存</option>
+              <option>一般背景</option>
+              <option>无关</option>
+            </select>
+          </label>
+          <label>
+            批注
+            <input name="comment" maxlength="4000" placeholder="为什么？">
+          </label>
+          <button type="submit">保存</button>
+          <span class="feedback-status"></span>
+        </form>
+      </article>
+    </template>
+
+    <template id="decision-template">
+      <article class="decision-card">
+        <div class="decision-card-heading">
+          <div class="decision-identifiers">
+            <span class="decision-kind"></span>
+            <span class="snapshot-badge"></span>
+          </div>
+          <nav class="export-links" aria-label="导出当前条目">
+            <a data-format="csl-json" download>CSL-JSON</a>
+            <a data-format="bibtex" download>BibTeX</a>
+            <a data-format="ris" download>RIS</a>
+            <a data-format="markdown" download>Markdown</a>
+            <a class="reproduction-link" download>复现交接单</a>
+          </nav>
+        </div>
+
+        <h3><a class="decision-title" target="_blank" rel="noreferrer"></a></h3>
+        <p class="decision-meta"></p>
+        <p class="decision-abstract"></p>
+        <section class="decision-core" aria-label="立即决策信息">
+          <div class="why-now">
+            <strong>为什么是现在</strong>
+            <p class="decision-why-now"></p>
+          </div>
+          <div class="claim-evidence">
+            <strong>关键主张与证据</strong>
+            <p class="decision-claim"></p>
+            <p class="decision-evidence-status"></p>
+          </div>
+        </section>
+
+        <dl class="decision-signals" aria-label="三类决策信号">
+          <div>
+            <dt>语义相关性</dt>
+            <dd class="signal-semantic"></dd>
+          </div>
+          <div>
+            <dt>当前动作</dt>
+            <dd class="signal-action"></dd>
+          </div>
+          <div>
+            <dt>使用后结果</dt>
+            <dd class="signal-outcome"></dd>
+          </div>
+        </dl>
+
+        <details class="decision-boundaries">
+          <summary>版本、限制、成本风险与可能变化</summary>
+          <dl class="boundary-list">
+            <div>
+              <dt>同版本证据</dt>
+              <dd class="same-revision"></dd>
+            </div>
+            <div>
+              <dt>限制</dt>
+              <dd class="decision-limitations"></dd>
+            </div>
+            <div>
+              <dt>成本与风险</dt>
+              <dd class="decision-cost-risk"></dd>
+            </div>
+            <div>
+              <dt>可能改变什么</dt>
+              <dd class="decision-change"></dd>
+            </div>
+          </dl>
+        </details>
+
+        <details class="analysis-details">
+          <summary>查看分析依据</summary>
+          <div class="analysis-content"></div>
+        </details>
+
+        <details class="frozen-evidence">
+          <summary>查看冻结原文证据</summary>
+          <div class="evidence-content" aria-live="polite">展开后载入证据。</div>
+        </details>
+
+        <form class="decision-form">
+          <input type="hidden" name="issue_id">
+          <input type="hidden" name="analysis_id">
+          <label>
+            决策
+            <select name="action" required>
+              <option value="">请选择</option>
+              <option value="save">保存到核心阅读</option>
+              <option value="defer">暂缓决定</option>
+              <option value="reject">本期排除</option>
+              <option value="request_deep_read">请求补充深读</option>
+            </select>
+          </label>
+          <label class="decision-reason-field">
+            决策理由
+            <input
+              name="reason"
+              maxlength="1000"
+              required
+              placeholder="写下可复核的主要理由"
+            >
+          </label>
+          <label class="decision-note-field">
+            补充备注（可选）
+            <textarea
+              name="note"
+              maxlength="4000"
+              rows="2"
+              placeholder="后续动作、疑问或限制"
+            ></textarea>
+          </label>
+          <div class="decision-form-actions">
+            <button type="submit">保存决策</button>
+            <span class="decision-save-status" role="status" aria-live="polite"></span>
+          </div>
+        </form>
+      </article>
+    </template>
+
+    <script src="/app.js?v=decision-operations-11" defer></script>
+  </body>
+</html>

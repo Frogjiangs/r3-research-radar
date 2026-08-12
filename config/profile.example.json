@@ -1,0 +1,203 @@
+{
+  "schema_version": "1.1",
+  "workspace_root": "..",
+  "profile_id": "agent-systems-radar",
+  "profile_version": 1,
+  "name": "Agent Systems Research Radar",
+  "research_question": "Which recent papers and open-source repositories materially improve the reliability, efficiency, or evaluation of multi-step AI agent workflows?",
+  "decision_scope": "Decide whether each item should be read, tested, adopted, watched, or skipped; do not expand into a general writing assistant.",
+  "languages": {
+    "academic_primary": ["en"],
+    "secondary_reference": ["zh"]
+  },
+  "time_policy": {
+    "technical_from_year": 2023,
+    "priority_from_year": 2025,
+    "older_foundational_lane": true
+  },
+  "frontier_ratio": 0.4,
+  "mature_ratio": 0.6,
+  "run": {
+    "max_runtime_seconds": 3600,
+    "weekly_display_min": 3,
+    "weekly_display_max": 10,
+    "important_min": 2,
+    "important_max": 6,
+    "must_read_min": 1,
+    "must_read_max": 3,
+    "resume_incomplete": true,
+    "max_content_items_per_invocation": 25,
+    "max_transfer_bytes_per_invocation": 268435456,
+    "minimum_free_disk_bytes": 5368709120
+  },
+  "sources": {
+    "openalex": {
+      "enabled": true,
+      "delay_seconds": 1.1,
+      "page_size": 25,
+      "max_results_per_query": 100
+    },
+    "arxiv": {
+      "enabled": true,
+      "delay_seconds": 3.3,
+      "page_size": 25,
+      "max_results_per_query": 100
+    },
+    "github": {
+      "enabled": true,
+      "delay_seconds": 6.5,
+      "page_size": 20,
+      "max_results_per_query": 100
+    }
+  },
+  "hosted_search": {
+    "enabled": true,
+    "provider": "codex_cli",
+    "mode": "supplementary",
+    "max_queries_per_run": 2,
+    "timeout_seconds": 600,
+    "sandbox": "read-only",
+    "live_search": true,
+    "prompt_version": "r3-hosted-search-v1",
+    "query_ids": ["q01", "q03"],
+    "official_domains": [
+      "arxiv.org",
+      "openreview.net",
+      "aclanthology.org",
+      "proceedings.mlr.press",
+      "dl.acm.org",
+      "ieeexplore.ieee.org",
+      "usenix.org",
+      "github.com"
+    ]
+  },
+  "queries": [
+    {
+      "id": "q01",
+      "lane": "core",
+      "sources": ["openalex", "arxiv"],
+      "query": "\"agent workflow\" reliability evaluation"
+    },
+    {
+      "id": "q02",
+      "lane": "core",
+      "sources": ["openalex", "arxiv"],
+      "query": "\"AI agent\" benchmark reproducibility"
+    },
+    {
+      "id": "q03",
+      "lane": "adjacent",
+      "sources": ["openalex", "arxiv"],
+      "query": "\"multi-agent\" efficiency systems"
+    },
+    {
+      "id": "q04",
+      "lane": "escape",
+      "sources": ["openalex", "arxiv"],
+      "query": "\"agentic systems\" failure analysis"
+    },
+    {
+      "id": "g01",
+      "lane": "code",
+      "sources": ["github"],
+      "query": "\"research agent\" in:name,description archived:false fork:false"
+    },
+    {
+      "id": "g02",
+      "lane": "code",
+      "sources": ["github"],
+      "query": "\"agent evaluation\" in:name,description archived:false fork:false"
+    }
+  ],
+  "admission": {
+    "require_title": true,
+    "exclude_retracted": true,
+    "exclude_github_archived": true,
+    "exclude_github_forks": false,
+    "no_semantic_prefilter": true
+  },
+  "documents": {
+    "max_download_bytes": 52428800,
+    "max_repository_archive_bytes": 104857600,
+    "max_repository_uncompressed_bytes": 536870912,
+    "max_repository_text_bytes": 10485760,
+    "max_single_text_file_bytes": 5242880,
+    "repository_corpus": {
+      "mode": "core_plus_sampled_aux_v1",
+      "max_selected_text_bytes": 1572864,
+      "max_auxiliary_text_bytes": 262144
+    },
+    "chunk_characters": 6500,
+    "chunk_overlap_characters": 350
+  },
+  "pdf_parser": {
+    "backend": "pypdf_worker",
+    "policy_version": "r3-pdf-text-v1",
+    "wall_timeout_seconds": 120,
+    "cpu_time_seconds": 90,
+    "memory_limit_bytes": 1073741824,
+    "max_input_bytes": 52428800,
+    "max_pages": 2000,
+    "max_output_characters": 20000000,
+    "max_result_bytes": 33554432
+  },
+  "analysis": {
+    "primary_provider": "codex_cli",
+    "prompt_version": "r3-deep-read-v5",
+    "batch_chunk_count": 6,
+    "synthesis_group_max_items": 24,
+    "synthesis_input_character_budget": 60000,
+    "cleanup_margin_seconds": 120,
+    "minimum_model_call_seconds": 30,
+    "max_parallel_batches": 2,
+    "budget_planning": {
+      "retry_reserve_invocations": 6
+    },
+    "output_detail": "concise_evidence",
+    "budgets": {
+      "max_invocations_per_run": 100,
+      "max_invocations_per_task": 60,
+      "max_input_tokens_per_run": 2500000,
+      "max_input_tokens_per_task": 1200000,
+      "max_output_tokens_per_run": 300000,
+      "max_output_tokens_per_task": 150000
+    },
+    "codex_cli": {
+      "timeout_seconds": 1200,
+      "sandbox": "read-only",
+      "ephemeral": true,
+      "ignore_user_config": true,
+      "ignore_rules": true,
+      "model": "",
+      "reasoning_effort": "high"
+    },
+    "fallback_provider": "llama_cpp",
+    "fallback_only": true,
+    "llama_cpp": {
+      "base_url": "http://127.0.0.1:18130/v1",
+      "model": "local-openai-compatible",
+      "api_key_env": "R3_RADAR_LLM_API_KEY",
+      "timeout_seconds": 300,
+      "temperature": 0.1,
+      "chunk_max_tokens": 6000,
+      "synthesis_max_tokens": 4000,
+      "managed_server": {
+        "enabled": false,
+        "executable": "",
+        "model_path": "",
+        "host": "127.0.0.1",
+        "port": 18130,
+        "devices": [],
+        "split_mode": "layer",
+        "tensor_split": "",
+        "context": 32768,
+        "batch_size": 512
+      }
+    }
+  },
+  "paths": {
+    "data": ".r3radar/agent-systems-radar/data",
+    "literature": ".r3radar/agent-systems-radar/literature",
+    "outputs": ".r3radar/agent-systems-radar/outputs"
+  }
+}

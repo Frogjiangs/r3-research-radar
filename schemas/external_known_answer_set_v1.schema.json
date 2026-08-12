@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://r3radar.local/schemas/external_known_answer_set_v1.schema.json",
+  "title": "R3 External Known-Answer Set v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "set_id", "title", "created_at", "collection_provenance",
+    "split_policy", "freeze", "items"
+  ],
+  "properties": {
+    "schema": {"const": "r3/external-known-answer-set/v1"},
+    "set_id": {"type": "string", "minLength": 1},
+    "title": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "collection_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["created_by", "source_artifact_ids", "r3_candidate_artifact_ids", "independence_note"],
+      "properties": {
+        "created_by": {"type": "string", "minLength": 1},
+        "source_artifact_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "r3_candidate_artifact_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "independence_note": {"type": "string", "minLength": 1}
+      },
+      "description": "Runtime validation additionally requires source_artifact_ids and r3_candidate_artifact_ids to be disjoint."
+    },
+    "split_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assignment_basis", "development_use", "evaluation_use", "assignment_sha256"],
+      "properties": {
+        "assignment_basis": {"type": "string", "minLength": 1},
+        "development_use": {"type": "string", "minLength": 1},
+        "evaluation_use": {"type": "string", "minLength": 1},
+        "assignment_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]}
+      }
+    },
+    "freeze": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "frozen_at", "frozen_by", "set_sha256"],
+          "properties": {
+            "status": {"const": "draft"},
+            "frozen_at": {"type": "null"},
+            "frozen_by": {"type": "null"},
+            "set_sha256": {"type": "null"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "frozen_at", "frozen_by", "set_sha256"],
+          "properties": {
+            "status": {"const": "frozen"},
+            "frozen_at": {"type": "string", "format": "date-time"},
+            "frozen_by": {"type": "string", "minLength": 1},
+            "set_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        }
+      ]
+    },
+    "items": {
+      "type": "array",
+      "minItems": 20,
+      "maxItems": 35,
+      "items": {"$ref": "#/$defs/item"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "kind", "canonical_id_type", "canonical_id", "version", "version_required"],
+      "properties": {
+        "status": {"enum": ["verified", "missing"]},
+        "kind": {"enum": ["paper", "repository", "dataset", "other"]},
+        "canonical_id_type": {"type": ["string", "null"], "enum": ["doi", "arxiv", "github", "openalex", "semantic_scholar", "url", "other", null]},
+        "canonical_id": {"type": ["string", "null"]},
+        "version": {"type": ["string", "null"]},
+        "version_required": {"type": "boolean"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "artifact_id", "reference_url", "collected_at", "independence_basis"],
+      "properties": {
+        "category": {"enum": ["user_prior_list", "advisor_or_independent_researcher", "independent_database", "citation_chasing"]},
+        "artifact_id": {"type": "string", "minLength": 1},
+        "reference_url": {"type": "string", "format": "uri"},
+        "collected_at": {"type": "string", "format": "date-time"},
+        "independence_basis": {"enum": ["documented_before_r3_run", "nominated_by_external_researcher", "independent_query_or_export", "citation_chasing_from_external_seed"]}
+      }
+    },
+    "judgment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "relevance_grade", "must_read", "judged_by", "judged_at", "notes"],
+      "properties": {
+        "status": {"enum": ["verified", "unknown"]},
+        "relevance_grade": {"type": ["integer", "null"], "minimum": 0, "maximum": 3},
+        "must_read": {"type": ["boolean", "null"]},
+        "judged_by": {"type": ["string", "null"]},
+        "judged_at": {"type": ["string", "null"], "format": "date-time"},
+        "notes": {"type": ["string", "null"]}
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_id", "title", "abstract_or_description", "split", "source", "identity", "judgment", "duplicate_cluster_id"],
+      "properties": {
+        "item_id": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "abstract_or_description": {"type": "string", "minLength": 1},
+        "split": {"enum": ["development", "evaluation"]},
+        "source": {"$ref": "#/$defs/source"},
+        "identity": {"$ref": "#/$defs/identity"},
+        "judgment": {"$ref": "#/$defs/judgment"},
+        "duplicate_cluster_id": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

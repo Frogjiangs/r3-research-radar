@@ -1,0 +1,9 @@
+{
+  "name": "r3-research-radar-tools",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Pinned local Codex CLI runtime for the R3 research radar.",
+  "dependencies": {
+    "@openai/codex": "0.145.0"
+  }
+}

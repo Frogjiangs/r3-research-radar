@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If R3 Research Radar supports your work, cite the software version and the evidence artifacts produced by your run."
+title: "R3 Research Radar"
+type: software
+version: "0.2.0a1"
+repository-code: "https://github.com/Frogjiangs/r3-research-radar"
+authors:
+  - name: "R3 Research Radar contributors"
+abstract: "A decision-grade research radar for discovering and evidence-gated deep reading of papers and source-code repositories."
+keywords:
+  - research radar
+  - scientific literature
+  - source code
+  - evidence provenance
