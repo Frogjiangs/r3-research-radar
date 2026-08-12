@@ -1036,23 +1036,27 @@ def parse_pdf_with_worker(
         shutil.copyfile(source, staged_input)
         shutil.copyfile(sandbox_source, sandbox_path)
         shutil.copyfile(worker_source, worker_path)
-        if (
-            not _staged_artifact_matches(
-                staged_input,
-                expected_byte_count=expected_byte_count,
-                expected_sha256=expected_sha256,
+
+        def staged_artifacts_match() -> bool:
+            return (
+                _staged_artifact_matches(
+                    staged_input,
+                    expected_byte_count=expected_byte_count,
+                    expected_sha256=expected_sha256,
+                )
+                and _staged_artifact_matches(
+                    sandbox_path,
+                    expected_byte_count=sandbox_byte_count,
+                    expected_sha256=sandbox_sha256,
+                )
+                and _staged_artifact_matches(
+                    worker_path,
+                    expected_byte_count=worker_byte_count,
+                    expected_sha256=worker_sha256,
+                )
             )
-            or not _staged_artifact_matches(
-                sandbox_path,
-                expected_byte_count=sandbox_byte_count,
-                expected_sha256=sandbox_sha256,
-            )
-            or not _staged_artifact_matches(
-                worker_path,
-                expected_byte_count=worker_byte_count,
-                expected_sha256=worker_sha256,
-            )
-        ):
+
+        if not staged_artifacts_match():
             raise PdfParseError(
                 "pdf_extract_worker_failed",
                 "input_mismatch",
@@ -1241,6 +1245,13 @@ def parse_pdf_with_worker(
                         "termination": "wall_timeout",
                     }
                 )
+                if not staged_artifacts_match():
+                    raise PdfParseError(
+                        "pdf_extract_worker_failed",
+                        "staged_artifact_modified",
+                        "A staged PDF or worker artifact changed during parsing.",
+                        receipt=receipt,
+                    )
                 raise PdfParseError(
                     "pdf_extract_timeout",
                     "wall_timeout",
@@ -1299,23 +1310,7 @@ def parse_pdf_with_worker(
                     "The PDF worker exited without a trusted result.",
                     receipt=receipt,
             )
-            if (
-                not _staged_artifact_matches(
-                    staged_input,
-                    expected_byte_count=expected_byte_count,
-                    expected_sha256=expected_sha256,
-                )
-                or not _staged_artifact_matches(
-                    sandbox_path,
-                    expected_byte_count=sandbox_byte_count,
-                    expected_sha256=sandbox_sha256,
-                )
-                or not _staged_artifact_matches(
-                    worker_path,
-                    expected_byte_count=worker_byte_count,
-                    expected_sha256=worker_sha256,
-                )
-            ):
+            if not staged_artifacts_match():
                 raise PdfParseError(
                     "pdf_extract_worker_failed",
                     "staged_artifact_modified",

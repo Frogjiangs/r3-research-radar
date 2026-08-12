@@ -8088,6 +8088,37 @@ result = {
                     self.assertLess(time.monotonic() - started, 8)
                     self.assertNotIn("result_sha256", raised.exception.receipt)
 
+            modified_then_hung = root / "modified_then_hung.py"
+            modified_then_hung.write_text(
+                "from pathlib import Path\n"
+                "import time\n"
+                "Path(__file__).write_text('changed', encoding='utf-8')\n"
+                "time.sleep(30)\n",
+                encoding="utf-8",
+                newline="\n",
+            )
+            timeout_config = dict(config)
+            timeout_config["wall_timeout_seconds"] = 1
+            started = time.monotonic()
+            with self.assertRaises(PdfParseError) as raised:
+                parse_pdf_with_worker(
+                    input_path,
+                    expected_sha256=hashlib.sha256(body).hexdigest(),
+                    expected_byte_count=len(body),
+                    config=timeout_config,
+                    _worker_path=modified_then_hung,
+                )
+            self.assertEqual(
+                raised.exception.failure_code,
+                "staged_artifact_modified",
+            )
+            self.assertEqual(
+                raised.exception.receipt["termination"],
+                "wall_timeout",
+            )
+            self.assertLess(time.monotonic() - started, 4)
+            self.assertNotIn("result_sha256", raised.exception.receipt)
+
     @unittest.skipUnless(os.name == "nt", "P0 PDF sandbox is Windows-specific")
     def test_low_integrity_strips_credentials_blocks_workspace_write_and_children(
         self,
