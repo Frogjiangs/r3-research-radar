@@ -258,9 +258,9 @@ class VerificationReceiptTests(unittest.TestCase):
             self.assertEqual(payload, json.loads(output.read_text(encoding="utf-8")))
             self.assertEqual([], list(root.glob(f".{output.name}.*.tmp")))
 
-    def test_current_project_config_produces_authoritative_policy_hashes(self) -> None:
+    def test_public_project_config_produces_authoritative_policy_hashes(self) -> None:
         evidence = RECEIPT.config_evidence(
-            PROJECT_ROOT / "config" / "r3.workflow-cache-value.full-v1.json",
+            PROJECT_ROOT / "config" / "profile.example.json",
             PROJECT_ROOT,
         )
 

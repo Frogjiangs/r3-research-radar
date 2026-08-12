@@ -788,7 +788,7 @@ class ModelTests(unittest.TestCase):
                 kind="paper",
                 title="CacheBlend",
                 query_id="q01",
-                year=2024,
+                year=int(settings.raw["time_policy"]["priority_from_year"]),
                 arxiv_id="2405.16444v2",
             )
             decision = objective_admission(record, settings.raw)
@@ -3153,6 +3153,9 @@ class StorageTests(unittest.TestCase):
     ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             settings = make_settings(Path(temporary))
+            expected_official_jobs = sum(
+                len(query["sources"]) for query in settings.raw["queries"]
+            )
             with RadarPipeline(
                 settings,
                 mode="run",
@@ -3185,7 +3188,7 @@ class StorageTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     summary["visible_backlog"]["unexplained_components"],
-                    {"query_jobs.pending": 27},
+                    {"query_jobs.pending": expected_official_jobs},
                 )
                 self.assertEqual(
                     summary["visible_backlog"]["reason_codes"],
@@ -3196,7 +3199,7 @@ class StorageTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     persisted["visible_backlog"]["unexplained_components"],
-                    {"query_jobs.pending": 27},
+                    {"query_jobs.pending": expected_official_jobs},
                 )
                 with pipeline.store._lock:
                     run = pipeline.store._connection.execute(
@@ -3319,6 +3322,9 @@ class StorageTests(unittest.TestCase):
     def test_unknown_retry_stays_paused_even_with_runtime_reason(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             settings = make_settings(Path(temporary))
+            expected_official_jobs = sum(
+                len(query["sources"]) for query in settings.raw["queries"]
+            )
             with RadarPipeline(
                 settings,
                 mode="run",
@@ -3354,7 +3360,7 @@ class StorageTests(unittest.TestCase):
                 self.assertEqual(summary["status"], "paused")
                 self.assertEqual(
                     summary["visible_backlog"]["unexplained_components"],
-                    {"query_jobs.retry": 27},
+                    {"query_jobs.retry": expected_official_jobs},
                 )
 
     def test_runtime_budget_receipt_has_structured_actual_and_limit(self) -> None:
@@ -3487,6 +3493,9 @@ class StorageTests(unittest.TestCase):
     ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             settings = make_settings(Path(temporary))
+            expected_official_jobs = sum(
+                len(query["sources"]) for query in settings.raw["queries"]
+            )
             with RadarPipeline(
                 settings,
                 mode="run",
@@ -3515,7 +3524,7 @@ class StorageTests(unittest.TestCase):
                     summary["visible_backlog"]["decision_snapshot"]["components"][
                         "query_jobs.pending"
                     ],
-                    26,
+                    expected_official_jobs - 1,
                 )
                 self.assertEqual(
                     summary["visible_backlog"]["decision_snapshot"]["components"][
@@ -3525,20 +3534,23 @@ class StorageTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     summary["visible_backlog"]["components"]["query_jobs.pending"],
-                    27,
+                    expected_official_jobs,
                 )
                 self.assertEqual(
                     summary["visible_backlog"]["components"]["query_jobs.running"],
                     0,
                 )
-                self.assertEqual(summary["query_jobs"]["pending"], 27)
+                self.assertEqual(
+                    summary["query_jobs"]["pending"],
+                    expected_official_jobs,
+                )
                 self.assertNotIn("running", summary["query_jobs"])
                 self.assertEqual(
                     summary["visible_backlog"]["finalization_changed_components"],
                     {
                         "query_jobs.pending": {
-                            "decision": 26,
-                            "persisted": 27,
+                            "decision": expected_official_jobs - 1,
+                            "persisted": expected_official_jobs,
                         },
                         "query_jobs.running": {
                             "decision": 1,
@@ -4267,10 +4279,18 @@ class StorageTests(unittest.TestCase):
                 )
                 self.assertEqual([], coverage["missing_jobs"])
 
+                hosted_query_ids = set(
+                    settings.raw["hosted_search"]["query_ids"]
+                )
+                removed_query = next(
+                    query
+                    for query in settings.raw["queries"]
+                    if query["id"] not in hosted_query_ids
+                )
                 with pipeline.store._lock:
                     pipeline.store._connection.execute(
-                        "DELETE FROM query_jobs WHERE run_id=? AND query_id='q08'",
-                        (pipeline.run_id,),
+                        "DELETE FROM query_jobs WHERE run_id=? AND query_id=?",
+                        (pipeline.run_id, removed_query["id"]),
                     )
                     pipeline.store._connection.commit()
                 incomplete = pipeline.store.query_job_coverage(
@@ -4278,7 +4298,10 @@ class StorageTests(unittest.TestCase):
                     settings,
                 )
                 self.assertFalse(incomplete["plan_complete"])
-                self.assertEqual(2, len(incomplete["missing_jobs"]))
+                self.assertEqual(
+                    len(removed_query["sources"]),
+                    len(incomplete["missing_jobs"]),
+                )
                 pipeline.store.pause_or_complete_run(
                     pipeline.run_id,
                     paused=True,
@@ -8668,10 +8691,10 @@ class DeepReadTests(unittest.TestCase):
                 "$.properties.evidence_anchors.uniqueItems",
             ),
         )
-        settings = load_settings(DEFAULT_CONFIG)
+        settings = load_settings(PROJECT_DIR / "config" / "profile.example.json")
         self.assertEqual(
             settings.analysis_policy_hash,
-            "31885d2982a0e94c06096d4812e28d0a44e18b1da88bc4b2a0b2ff0cc47894cd",
+            "1d2aeafa4404685ed83b72d2393530f19a513312d581aee34e75c6ff855f2ce7",
         )
 
     def test_schema_compatibility_mapping_is_exact_sha_only(self) -> None:
@@ -10243,6 +10266,17 @@ class DeepReadTests(unittest.TestCase):
             settings = make_settings(root)
             settings.raw["analysis"]["synthesis_input_character_budget"] = 10000
             settings.raw["analysis"]["synthesis_group_max_items"] = 8
+            settings.raw["analysis"]["max_parallel_batches"] = 1
+            settings.raw["analysis"]["budgets"].update(
+                {
+                    "max_invocations_per_run": 400,
+                    "max_invocations_per_task": 200,
+                    "max_input_tokens_per_run": 12_000_000,
+                    "max_input_tokens_per_task": 6_000_000,
+                    "max_output_tokens_per_run": 2_000_000,
+                    "max_output_tokens_per_task": 1_000_000,
+                }
+            )
             text = "=== PAGE 1 ===\n" + ("workflow cache evidence\n" * 620)
             text_path = settings.literature_dir / "text" / "large-paper.txt"
             text_path.write_bytes(text.encode("utf-8"))

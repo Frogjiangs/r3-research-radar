@@ -22,6 +22,7 @@ MAX_UNCOMPRESSED_BYTES = 10 * 1024 * 1024
 # Public packaging is intentionally fail-closed. New files do not enter a
 # release merely because they were added somewhere under the repository.
 REQUIRED_EXACT_FILES = (
+    ".gitattributes",
     ".gitignore",
     "README.md",
     "MANIFEST.in",
